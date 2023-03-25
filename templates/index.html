@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Access MYSQL with Flask & ajax</title>
+    <!-- CSS only -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
+</head>
+
+<body>
+    <div class="container">
+        <div class="row">
+            <header class="d-flex flex-wrap justify-content-center py-3 mb-4 border-bottom">
+                <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-dark text-decoration-none">
+                    <svg class="bi me-2" width="40" height="32">
+                        <use xlink:href="#bootstrap"></use>
+                    </svg>
+                    <span class="fs-4">利用Flask及非同步傳輸存取 MYSQL 資料庫</span>
+                </a>
+                <form class="form-group row">
+                    <div class="col-auto">
+                        <button type="button" class="btn btn-primary" id="query">取得 kkbox 列表</button>
+                    </div>
+                    <div class="col-auto">
+                        <div class="input-group">
+                            <input type="text" class="form-control" placeholder="輸入歌曲名稱" aria-describedby="search" id="title">
+                            <button class="btn btn-outline-secondary" type="button" id="search">搜尋</button>
+                        </div>
+                    </div>
+                </form>
+            </header>
+        </div>
+        <div id="results" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-1">請按下「取得 kkbox 列表」按鈕</div>
+    </div>
+
+    <!-- JavaScript Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-gtEjrD/SeCtmISkJkNUaaKMoLD0//ElJ19smozuHV6z3Iehds+3Ulb9Bn9Plx0x4"
+        crossorigin="anonymous"></script>
+    
+    <!-- 自訂 js 語法 -->
+    <script>
+        //選擇放置查詢結果的元素
+        const div_result=document.querySelector("div#results");
+        //取得所有 kkbox 列表的按鈕元素
+        const btn_query=document.querySelector('button#query');
+        //註冊 "取得 kkbox 列表" 的按鈕 click 事件
+        btn_query.addEventListener("click",function(event){
+            //取得所有 kkbox 列表
+            fetch("/kkbox",{
+                method:"GET"
+            }).then(function(response){
+                return response.text();
+            }).then(function(json){
+                //將json轉成物件
+                const dictData=JSON.parse(json);
+                //若回傳結果是true 則將results屬性的內容呈現在網頁上
+                if(dictData['success']){
+                    let html='';
+                    for (let result of dictData['results']){//template string `塞文字` `${}用來塞變數`
+                        html += `<div class="col" data-id="${result['id']}">
+                        <div class="card shadow-sm">
+                        <div class="card-body">
+                        <p class="card-text">
+                        <input type="text" class="form-control update" value="${result['title']}" data-id="${result['id']}">                        
+                        <input type="text" class="form-control update" value="${result['song_name']}" data-id="${result['id']}">
+                        </p>
+                        <div class-"d-flex justify-content-between align-items-center">
+                        <div class="btn-group">
+                        <a class="btn btn-sm btn-outline-secondary" href="${result['song_url']}" target="_blank">欣賞</a>
+                        <a class="btn btn-sm btn-outline-secondary delete" href="#" data-id="${result['id']}">刪除</a>
+                        </div>
+                        </div>
+                        </div>
+                        </div>
+                        </div>`;
+                    }
+                    //呈現查詢結果 data-id 自訂屬性 html5開始可以用 "data-"一定要的 +anything 來存值
+                    div_result.innerHTML=html;
+                }else{
+                    alert(dictData['info']);
+                }
+            });
+        });
+
+        //選擇輸入影音標題的input元素
+        const input_title=document.querySelector("input#title");
+        //選擇搜尋按鈕元素
+        const btn_search=document.querySelector("button#search");
+        //註冊搜尋按鈕的click event
+        btn_search.addEventListener("click",function(event){
+            //取得搜尋文字
+            let title_value=input_title.value;
+
+            //進行檢索
+            fetch("kkbox/title",{
+                method:"POST",
+                headers:{"content-type":"application/json"},
+                body:JSON.stringify({
+                    title:title_value
+                })
+            }).then(function(response){
+                return response.text();
+            }).then(function(json){
+                //將json轉成物件
+const dictData=JSON.parse(json);
+//若回傳結果是true 則將results屬性的內容呈現在網頁上
+if(dictData['success']){
+    let html='';
+    for (let result of dictData['results']){//template string `塞文字` `${}用來塞變數`
+        html += `<div class="col" data-id="${result['id']}">
+        <div class="card shadow-sm">
+        <div class="card-body">
+        <p class="card-text">
+        <input type="text" class="form-control update" value="${result['title']}" data-id="${result['id']}">                        
+        <input type="text" class="form-control update" value="${result['song_name']}" data-id="${result['id']}">
+        </p>
+        <div class-"d-flex justify-content-between align-items-center">
+        <div class="btn-group">
+        <a class="btn btn-sm btn-outline-secondary" href="${result['song_url']}" target="_blank">欣賞</a>
+        <a class="btn btn-sm btn-outline-secondary delete" href="#" data-id="${result['id']}">刪除</a>
+        </div>
+        </div>
+        </div>
+        </div>
+        </div>`;
+    }
+    //呈現查詢結果 data-id 自訂屬性 html5開始可以用 "data-"一定要的 +anything 來存值
+    div_result.innerHTML=html;
+    }else{
+        alert(dictData['info']);
+    }
+    }).catch(function(err){
+        console.log(err);
+    });
+});
+    //動態產生的元素 無法使用 evnetlistener 所以直接listen dom 再用tagName及className來篩選出是否為 delete
+    //註冊所有使用到刪除事件的元素
+    document.addEventListener('click',function(event){
+        if (event.target){
+            if(event.target.tagName.toLowerCase()=="a" && event.target.classList.contains("delete")){
+                //預防頁面跳轉 以利自訂事件執行
+                event.preventDefault();
+                //取得點擊的 a 元素
+                const a = event.target;
+                //取得 a 的屬性值(id)
+                let id =a.getAttribute("data-id");
+                //刪除指定id的歌曲
+                fetch(`/kkbox/${id}`,{
+                    method:"DELETE",
+                }).then(function(response){
+                    return response.text();
+                }).then(function(json){
+                    //將json轉成物件
+                    const dictData=JSON.parse(json);
+                    //若是回傳結果為true 則顯示刪除成功
+                    if(dictData['success']){
+                        alert(dictData['info']);
+                        //將點選的元素刪除 選擇器裡面的值要 " "
+                        document.querySelector(`div.col[data-id="${id}"]`).remove();
+                    }
+                    else{
+                        alert(dictData['info']);
+                    }
+                })
+            }
+        }
+    });
+
+    //註冊所有使用到 "離開焦點" 事件的元素
+    document.addEventListener('focusout',function(event){
+        if(event.target){
+            if (event.target.tagName.toLowerCase() == "input" && event.target.classList.contains("update")){
+                //取消預設事件
+                event.preventDefault();
+                //取得正在離開焦點的元素
+                const input =even.target;
+                //取得 input 元素的屬性值
+                let id = input.getAttribute("data-id");
+                let title_value=input.value;
+
+                //更新指定id的資料
+                fetch(`/kkbox/${id}`,{
+                    method:"POST",
+                    headers:{"content-type":"application/json"},
+                    body:JSON.stringify({
+                        title:title_value
+                    })
+                }).then(function(response){
+                    return response.text();       
+                }).then(function(json){
+                    //將json轉成物件
+                    const dictData=JSON.parse(json);
+                    //若是回傳結果為true 則顯示更新成功
+                    if(dictData['success']){
+                        alert(dictData['info']);
+                    }else{
+                        alert(dictData['info']);
+                    }
+                }).catch(function(err){
+                    console.log(err);
+                })
+            }
+        }
+    })
+    </script>
+</body>
+
+</html>
