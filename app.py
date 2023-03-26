@@ -5,7 +5,7 @@ import pymysql
 connection = pymysql.connect(
     host='localhost',
     user='root',
-    password='Tt-143085',
+    password='',
     database='kkbox',
     charset='utf8',
     cursorclass=pymysql.cursors.DictCursor
